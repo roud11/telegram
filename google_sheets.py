@@ -11,7 +11,7 @@ import json
 
 load_dotenv()
 # Файл, полученный в Google Developer Console
-CREDENTIALS_FILE = 'creds.json'
+CREDENTIALS_FILE = '/home/maro/telegram/creds.json'
 # ID Google Sheets документа (взят из файла ".env")
 spreadsheet_id = str(os.getenv('GOOGLE_SHEETS_ID'))
 # Bot's token (взят из файла ".env")
@@ -21,7 +21,7 @@ bot_client = telebot.TeleBot(token=str(os.getenv('TOKEN')))
 # Настройка команды "start" и получение id пользователя
 @bot_client.message_handler(commands=["start"])
 def start(message: Message):
-    with open("users.json", "r") as f_o:
+    with open("/home/maro/telegram/users.json", "r") as f_o:
         data_from_json = json.load(f_o)
 
     user_id = message.from_user.id
@@ -30,7 +30,7 @@ def start(message: Message):
     if str(user_id) not in data_from_json:
         data_from_json[user_id] = {"username": username}
 
-    with open("users.json", "w") as f_o:
+    with open("/home/maro/telegram/users.json", "w") as f_o:
         json.dump(data_from_json, f_o, indent=4, ensure_ascii=False)
     bot_client.reply_to(message=message, text=str("Вы зарегистрированы."))
 
@@ -50,7 +50,7 @@ values = service.spreadsheets().values().get(
 ).execute()
 today = datetime.date.today()
 
-with open("users.json", "r") as f_o:
+with open("/home/maro/telegram/users.json", "r") as f_o:
     data_from_json = json.load(f_o)
 
 for i in range(len(values['values'][3])):
@@ -59,7 +59,8 @@ for i in range(len(values['values'][3])):
     if today.day == birthday_obj.day and today.month == birthday_obj.month:
         for ids in data_from_json:
             bot_client.send_message(ids, 'У ' + values['values'][1][i] + ' сегодня День Рождения. Не забудьте поздравить!\n' + "Вот его(её) номер: ")
-            bot_client.send_message(ids, (values['values'][4][i]).replace('-', ''))
-        print('У ' + values['values'][1][i] + ' сегодня День Рождения. Не забудьте поздравить!\n' + "Вот его(её) номер: " + (values['values'][4][i]).replace('-', ''))
+            if (values['values'][4][i]).strip():
+                bot_client.send_message(ids, str((values['values'][4][i]).replace('-', '')))
+
 
 bot_client.polling()
